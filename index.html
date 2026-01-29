@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timed Prediction</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .title {
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            font-size: 1.4rem;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .btn-white {
+            background-color: #fff;
+            color: #000;
+            padding: 16px 24px;
+            border-radius: 9999px;
+            font-weight: 800;
+            width: 100%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+        }
+
+        .btn-white:active {
+            transform: scale(0.96);
+            background-color: #f0f0f0;
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+            color: #fff;
+            text-align: center;
+            outline: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .glow-circle {
+            width: 240px;
+            height: 240px;
+            border: 5px solid #00f2ff;
+            border-radius: 50%;
+            margin: 0 auto 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.5), inset 0 0 20px rgba(0, 242, 255, 0.25);
+            background: radial-gradient(circle, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+        }
+
+        .multiplier {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .time-result {
+            color: #00f2ff;
+            font-weight: 800;
+            font-size: 1.25rem;
+            text-transform: uppercase;
+        }
+
+        .btn-win { background-color: #22c55e; color: #000; font-weight: 800; border-radius: 12px; flex: 1; padding: 16px; margin-right: 10px; text-transform: uppercase; }
+        .btn-loss { background-color: #ef4444; color: #000; font-weight: 800; border-radius: 12px; flex: 1; padding: 16px; text-transform: uppercase; }
+
+        .hidden { display: none; }
+
+        .fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Landing Screen -->
+        <div id="screen-landing" class="fade-in">
+            <h1 class="title">TIMED PREDICTION</h1>
+            <button onclick="showInputScreen()" class="btn-white">GET TIMED SIGNAL</button>
+        </div>
+
+        <!-- Input Screen -->
+        <div id="screen-input" class="hidden fade-in">
+            <h1 class="title">TIMED PREDICTION</h1>
+            <p class="text-gray-400 text-[11px] mb-6 font-bold tracking-widest uppercase">ENTER LAST 2 ROUND TIMES (HH:MM)</p>
+            
+            <input type="text" id="time1" placeholder="Time 1 (e.g 14:30)" class="input-field" maxlength="5">
+            <input type="text" id="time2" placeholder="Time 2 (e.g 14:32)" class="input-field" maxlength="5">
+            
+            <button onclick="generatePrediction()" class="btn-white mt-6">GENERATE SIGNAL</button>
+            <p class="text-gray-600 text-[10px] mt-8 cursor-pointer font-bold tracking-wider hover:text-gray-400 transition-colors" onclick="resetApp()">MANUAL INPUT TOGGLE</p>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="screen-result" class="hidden fade-in">
+            <h1 class="title">TIMED PREDICTION</h1>
+            
+            <div class="glow-circle">
+                <div class="multiplier" id="res-multiplier">0.00x</div>
+                <div class="time-result" id="res-time">TIME: 00:00/01</div>
+            </div>
+
+            <div class="flex justify-between w-full mt-6">
+                <button onclick="resetApp()" class="btn-win">WIN</button>
+                <button onclick="resetApp()" class="btn-loss">LOSS</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const screens = {
+            landing: document.getElementById('screen-landing'),
+            input: document.getElementById('screen-input'),
+            result: document.getElementById('screen-result')
+        };
+
+        function showInputScreen() {
+            screens.landing.classList.add('hidden');
+            screens.input.classList.remove('hidden');
+        }
+
+        function resetApp() {
+            document.getElementById('time1').value = '';
+            document.getElementById('time2').value = '';
+            screens.result.classList.add('hidden');
+            screens.input.classList.add('hidden');
+            screens.landing.classList.remove('hidden');
+        }
+
+        function formatTime(minutes) {
+            let h = Math.floor(minutes / 60) % 24;
+            let m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function parseTime(str) {
+            const parts = str.split(':');
+            if (parts.length !== 2) return null;
+            const h = parseInt(parts[0]);
+            const m = parseInt(parts[1]);
+            if (isNaN(h) || isNaN(m)) return null;
+            return h * 60 + m;
+        }
+
+        function generatePrediction() {
+            const t1Str = document.getElementById('time1').value;
+            const t2Str = document.getElementById('time2').value;
+
+            const t1 = parseTime(t1Str);
+            const t2 = parseTime(t2Str);
+
+            if (t1 === null || t2 === null) {
+                return; // Silence if incomplete, or add custom message box
+            }
+
+            // Logic: Analyze interval + Ensure result is ODD
+            let diff = Math.abs(t2 - t1);
+            if (diff === 0) diff = 3; // Fallback if same time
+
+            let nextMinutesStart = t2 + diff;
+
+            // "Add with odd" logic:
+            // Ensure the starting minute of the prediction is an ODD number.
+            if (nextMinutesStart % 2 === 0) {
+                nextMinutesStart += 1; 
+            }
+
+            const nextMinutesEnd = nextMinutesStart + 1;
+
+            // Generate a multiplier (odd)
+            // Strategy: Higher difference often results in higher odds for simulation feel
+            const baseMult = diff > 5 ? 5 : 1.5;
+            const randomMult = (Math.random() * (18.00 - baseMult) + baseMult).toFixed(2);
+
+            // Display Results
+            document.getElementById('res-multiplier').innerText = `${randomMult}x`;
+            document.getElementById('res-time').innerText = `TIME: ${formatTime(nextMinutesStart)}/${formatTime(nextMinutesEnd).split(':')[1]}`;
+
+            // Switch Screen
+            screens.input.classList.add('hidden');
+            screens.result.classList.remove('hidden');
+        }
+
+        // Auto-format helper for input (adds colon and prevents non-digits)
+        [document.getElementById('time1'), document.getElementById('time2')].forEach(input => {
+            input.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/[^\d]/g, '');
+                if (value.length > 2) {
+                    value = value.slice(0, 2) + ':' + value.slice(2, 4);
+                }
+                e.target.value = value;
+            });
+        });
+    </script>
+</body>
+</html>
